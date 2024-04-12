@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Reflection;
+using System.Resources;
 using Mosa.Compiler.Framework;
 using Mosa.Utility.Configuration;
 
@@ -29,33 +30,22 @@ public class BaseLauncher
 
 	protected void OutputStatus(string status)
 	{
-		if (string.IsNullOrEmpty(status)) return;
+		if (string.IsNullOrEmpty(status))
+			return;
 
 		OutputEvent(status);
 	}
 
-	protected virtual void OutputEvent(string status)
-	{
-		CompilerHooks.NotifyStatus?.Invoke(status);
-	}
+	protected virtual void OutputEvent(string status) => CompilerHooks.NotifyStatus?.Invoke(status);
 
 	protected static byte[] GetResource(string path, string name)
 	{
-		var newname = path.Replace(".", "._").Replace(@"\", "._").Replace("/", "._").Replace("-", "_") + "." + name;
-		return GetResource(newname);
-	}
-
-	protected static byte[] GetResource(string name)
-	{
-		var assembly = Assembly.GetExecutingAssembly();
-		var stream = assembly.GetManifestResourceStream("Mosa.Utility.Launcher.Resources." + name);
-		var binary = new BinaryReader(stream);
-		return binary.ReadBytes((int)stream.Length);
-	}
-
-	protected static string Quote(string location)
-	{
-		return '"' + location + '"';
+		var newName = $"{path
+			.Replace(".", "._")
+			.Replace(@"\", "._")
+			.Replace("/", "._")
+			.Replace("-", "_")}.{name}";
+		return GetResource(newName);
 	}
 
 	protected Process CreateApplicationProcess(string app, string args)
@@ -63,16 +53,17 @@ public class BaseLauncher
 		OutputStatus($"Starting Application: {app}");
 		OutputStatus($"Arguments: {args}");
 
-		var process = new Process();
+		var startInfo = new ProcessStartInfo
+		{
+			FileName = app,
+			Arguments = args,
+			UseShellExecute = false,
+			CreateNoWindow = true,
+			RedirectStandardOutput = false,
+			RedirectStandardError = false
+		};
 
-		process.StartInfo.FileName = app;
-		process.StartInfo.Arguments = args;
-		process.StartInfo.UseShellExecute = false;
-		process.StartInfo.RedirectStandardOutput = false;
-		process.StartInfo.RedirectStandardError = false;
-		process.StartInfo.CreateNoWindow = true;
-
-		return process;
+		return new Process { StartInfo = startInfo };
 	}
 
 	protected Process LaunchApplication(string app, string args)
@@ -80,7 +71,7 @@ public class BaseLauncher
 		OutputStatus($"Launching Application: {app}");
 		OutputStatus($"Arguments: {args}");
 
-		var start = new ProcessStartInfo
+		var startInfo = new ProcessStartInfo
 		{
 			FileName = app,
 			Arguments = args,
@@ -90,7 +81,7 @@ public class BaseLauncher
 			RedirectStandardError = true
 		};
 
-		return Process.Start(start);
+		return Process.Start(startInfo);
 	}
 
 	protected Process LaunchConsoleApplication(string app, string args)
@@ -111,32 +102,24 @@ public class BaseLauncher
 		return Process.Start(start);
 	}
 
-	protected string GetOutput(Process process)
+	protected static string GetOutput(Process process)
 	{
-		var output = process.StandardOutput.ReadToEnd();
-
 		process.WaitForExit();
 
+		var output = process.StandardOutput.ReadToEnd();
 		var error = process.StandardError.ReadToEnd();
 
-		return output + error;
+		return $"{output}{error}";
 	}
 
-	protected Process LaunchApplicationWithOutput(string app, string arg)
+	private static byte[] GetResource(string name)
 	{
-		var process = LaunchApplication(app, arg);
+		var assembly = Assembly.GetExecutingAssembly();
+		var stream = assembly.GetManifestResourceStream($"Mosa.Utility.Launcher.Resources.{name}");
+		if (stream == null)
+			throw new MissingManifestResourceException($"Cannot find resource: {name}");
 
-		var output = GetOutput(process);
-		OutputStatus(output);
-
-		return process;
-	}
-
-	protected string NullToEmpty(string value)
-	{
-		if (string.IsNullOrWhiteSpace(value))
-			return string.Empty;
-
-		return value;
+		var binary = new BinaryReader(stream);
+		return binary.ReadBytes((int)stream.Length);
 	}
 }

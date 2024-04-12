@@ -31,11 +31,7 @@ public class Builder : BaseLauncher
 		: base(mosaSettings, compilerHooks)
 	{
 		Counters = new List<string>();
-
-		if (CompilerHooks.NotifyEvent == null)
-		{
-			CompilerHooks.NotifyEvent = NotifyEvent;
-		}
+		CompilerHooks.NotifyEvent ??= NotifyEvent;
 	}
 
 	public void Build()
@@ -43,19 +39,11 @@ public class Builder : BaseLauncher
 		Counters.Clear();
 		IsSucccessful = false;
 
-		Stopwatch.StartNew();
+		Stopwatch.Start();
 
 		try
 		{
-			if (!Directory.Exists(MosaSettings.TemporaryFolder))
-			{
-				Directory.CreateDirectory(MosaSettings.ImageFolder);
-			}
-
-			if (!Directory.Exists(MosaSettings.ImageFolder))
-			{
-				Directory.CreateDirectory(MosaSettings.ImageFolder);
-			}
+			Directory.CreateDirectory(MosaSettings.ImageFolder);
 
 			if (string.IsNullOrEmpty(MosaSettings.SourceFiles[0]))
 			{
@@ -77,14 +65,10 @@ public class Builder : BaseLauncher
 			BuildImage();
 
 			if (!string.IsNullOrWhiteSpace(MosaSettings.NasmFile))
-			{
 				LaunchNDISASM();
-			}
 
 			if (!string.IsNullOrWhiteSpace(MosaSettings.AsmFile))
-			{
 				GenerateASMFile();
-			}
 
 			IsSucccessful = true;
 		}
@@ -95,8 +79,6 @@ public class Builder : BaseLauncher
 		}
 		finally
 		{
-			//compiler = null;
-
 			Stopwatch.Stop();
 		}
 	}
@@ -120,31 +102,32 @@ public class Builder : BaseLauncher
 
 	private void BuildImage()
 	{
-		if (string.IsNullOrWhiteSpace(MosaSettings.ImageFormat)) return;
+		if (string.IsNullOrWhiteSpace(MosaSettings.ImageFormat))
+			return;
 
 		OutputStatus($"Generating Image: {MosaSettings.ImageFormat}");
 
 		switch (MosaSettings.ImageFormat)
 		{
 			case "vmdk":
-				{
-					var imageFile = Path.Combine(MosaSettings.TemporaryFolder, $"{Path.GetFileNameWithoutExtension(MosaSettings.ImageFile)}.img");
-					CreateDiskImage(imageFile);
-					CreateVMDK(imageFile);
-					break;
-				}
+			{
+				var imageFile = Path.Combine(MosaSettings.TemporaryFolder, $"{Path.GetFileNameWithoutExtension(MosaSettings.ImageFile)}.img");
+				CreateDiskImage(imageFile);
+				CreateVMDK(imageFile);
+				break;
+			}
 			case "vdi":
-				{
-					var imageFile = Path.Combine(MosaSettings.TemporaryFolder, $"{Path.GetFileNameWithoutExtension(MosaSettings.ImageFile)}.img");
-					CreateDiskImage(imageFile);
-					CreateVDI(imageFile);
-					break;
-				}
+			{
+				var imageFile = Path.Combine(MosaSettings.TemporaryFolder, $"{Path.GetFileNameWithoutExtension(MosaSettings.ImageFile)}.img");
+				CreateDiskImage(imageFile);
+				CreateVDI(imageFile);
+				break;
+			}
 			default:
-				{
-					CreateDiskImage(MosaSettings.ImageFile);
-					break;
-				}
+			{
+				CreateDiskImage(MosaSettings.ImageFile);
+				break;
+			}
 		}
 	}
 
@@ -205,38 +188,29 @@ public class Builder : BaseLauncher
 	}
 
 	private byte[] GetLimineCFG()
-	{
-		return Encoding.ASCII.GetBytes($"TIMEOUT={MosaSettings.BootLoaderTimeout}\nINTERFACE_RESOLUTION=640x480\nINTERFACE_BRANDING=Managed Operating System Alliance\n:{MosaSettings.OSName}\nPROTOCOL=multiboot2\nKERNEL_PATH=boot:///kernel.bin");
-	}
+		=> Encoding.ASCII.GetBytes($"""
+									TIMEOUT={MosaSettings.BootLoaderTimeout}
+									INTERFACE_RESOLUTION=640x480
+									INTERFACE_BRANDING=Managed Operating System Alliance
+									:{MosaSettings.OSName}
+									PROTOCOL=multiboot2
+									KERNEL_PATH=boot:///kernel.bin
+									""");
 
 	private void CreateVMDK(string source)
-	{
-		var arg = $"convert -f raw -O vmdk {Quote(source)} {Quote(MosaSettings.ImageFile)}";
-
-		LaunchApplicationWithOutput(MosaSettings.QemuImgApp, arg);
-	}
+		=> LaunchApplication(MosaSettings.QemuImgApp, $"convert -f raw -O vmdk \"{source}\" \"{MosaSettings.ImageFile}\"").WaitForExit();
 
 	private void CreateVDI(string source)
-	{
-		var arg = $"convert -f raw -O vdi {Quote(source)} {Quote(MosaSettings.ImageFile)}";
-
-		LaunchApplicationWithOutput(MosaSettings.QemuImgApp, arg);
-	}
+		=> LaunchApplication(MosaSettings.QemuImgApp, $"convert -f raw -O vdi \"{source}\" \"{MosaSettings.ImageFile}\"").WaitForExit();
 
 	private void LaunchNDISASM()
 	{
 		OutputStatus($"Executing NDISASM: {MosaSettings.NasmFile}");
 
-		//var textSection = Linker.Sections[(int)SectionKind.Text];
 		var startingAddress = MosaSettings.BaseAddress + MultibootHeaderLength;
 		var fileOffset = Linker.BaseFileOffset + MultibootHeaderLength;
 
-		var arg = $"-b 32 -o0x{startingAddress:x} -e0x{fileOffset:x} {Quote(MosaSettings.OutputFile)}";
-
-		//var nasmfile = Path.Combine(LauncherSettings.ImageFolder, $"{Path.GetFileNameWithoutExtension(LauncherSettings.SourceFiles[0])}.nasm");
-
-		var process = LaunchApplication(MosaSettings.NdisasmApp, arg);
-
+		var process = LaunchApplication(MosaSettings.NdisasmApp, $"-b 32 -o0x{startingAddress:x} -e0x{fileOffset:x} \"{MosaSettings.OutputFile}\"");
 		var output = GetOutput(process);
 
 		File.WriteAllText(MosaSettings.NasmFile, output);
@@ -244,7 +218,7 @@ public class Builder : BaseLauncher
 
 	private void GenerateASMFile()
 	{
-		OutputStatus($"Reko Disassembly: {MosaSettings.AsmFile}");
+		OutputStatus($"Executing Reko Disassembly: {MosaSettings.AsmFile}");
 
 		var map = new Dictionary<ulong, List<string>>();
 
@@ -265,7 +239,6 @@ public class Builder : BaseLauncher
 		var length = textSection.Size;
 
 		var code2 = File.ReadAllBytes(MosaSettings.OutputFile);
-
 		var code = new byte[code2.Length];
 
 		for (ulong i = fileOffset; i < (ulong)code2.Length; i++)
@@ -274,46 +247,47 @@ public class Builder : BaseLauncher
 		var disassembler = new Disassembler.Disassembler(MosaSettings.Platform);
 		disassembler.SetMemory(code, startingAddress);
 
-		using (var dest = File.CreateText(MosaSettings.AsmFile))
+		using var dest = File.CreateText(MosaSettings.AsmFile);
+
+		foreach (var instruction in disassembler.Decode())
 		{
-			foreach (var instruction in disassembler.Decode())
-			{
-				if (map.TryGetValue(instruction.Address, out List<string> list))
-				{
-					foreach (var entry in list)
-					{
-						dest.WriteLine($"; {entry}");
-					}
-				}
+			if (map.TryGetValue(instruction.Address, out List<string> list))
+				foreach (var entry in list)
+					dest.WriteLine($"; {entry}");
 
-				dest.WriteLine(instruction.Full);
+			dest.WriteLine(instruction.Full);
 
-				if (instruction.Address > startingAddress + length)
-					break;
-			}
+			if (instruction.Address > startingAddress + length)
+				break;
 		}
 	}
 
 	private void NotifyEvent(CompilerEvent compilerEvent, string message, int threadID)
 	{
-		if (compilerEvent is CompilerEvent.Exception)
+		switch (compilerEvent)
 		{
-			var status = $"[Exception] {message}";
+			case CompilerEvent.Exception:
+			{
+				var status = $"[Exception] {message}";
 
-			OutputStatus(status);
-		}
-		else if (compilerEvent is CompilerEvent.CompilerStart or CompilerEvent.CompilerEnd or CompilerEvent.CompilingMethodsStart or CompilerEvent.CompilingMethodsCompleted or CompilerEvent.InlineMethodsScheduled or CompilerEvent.LinkingStart or CompilerEvent.LinkingEnd or CompilerEvent.Warning or CompilerEvent.Error)
-		{
-			var status = $"{compilerEvent.ToText()}";
+				OutputStatus(status);
+				break;
+			}
+			case CompilerEvent.CompilerStart or CompilerEvent.CompilerEnd or CompilerEvent.CompilingMethodsStart or CompilerEvent.CompilingMethodsCompleted or CompilerEvent.InlineMethodsScheduled or CompilerEvent.LinkingStart or CompilerEvent.LinkingEnd or CompilerEvent.Warning or CompilerEvent.Error:
+			{
+				var status = $"{compilerEvent.ToText()}";
 
-			if (!string.IsNullOrEmpty(message))
-				status += $" => {message}";
+				if (!string.IsNullOrEmpty(message))
+					status += $" => {message}";
 
-			OutputStatus(status);
-		}
-		else if (compilerEvent == CompilerEvent.Counter)
-		{
-			AddCounters(message);
+				OutputStatus(status);
+				break;
+			}
+			case CompilerEvent.Counter:
+			{
+				AddCounters(message);
+				break;
+			}
 		}
 	}
 }

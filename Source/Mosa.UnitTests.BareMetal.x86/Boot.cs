@@ -2,7 +2,6 @@
 
 using Mosa.Kernel.BareMetal;
 using Mosa.Kernel.BareMetal.Intel;
-using Mosa.Kernel.BareMetal.x86;
 using Mosa.Runtime.Plug;
 using Mosa.UnitTests.Optimization;
 
@@ -18,13 +17,9 @@ public static class Boot
 
 	public static void Main()
 	{
-		IDT.SetInterruptHandler(ProcessInterrupt);
-
 		UnitTestEngine.Setup(SerialController.COM1);
 		UnitTestEngine.EnterTestReadyLoop();
 	}
-
-	private static void ProcessInterrupt(uint interrupt, uint errorCode) => UnitTestEngine.Process();
 
 	private static void ForceLoad()
 	{

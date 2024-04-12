@@ -161,6 +161,8 @@ public static class CommandLineArguments
 			new Argument { Name = "-vmware-svga", Setting = Name.Emulator_SVGA, Value = "vmware"},
 			new Argument { Name = "-virtio-vga", Setting = Name.Emulator_SVGA, Value = "virtio"},
 
+			new Argument { Name = "-qemu-acceleration", Setting = Name.Emulator_QEMU_Acceleration, Value = "true"},
+
 			new Argument { Name = "-gdb-port", Setting = Name.GDB_Port},
 			new Argument { Name = "-gdb-host", Setting = Name.GDB_Host},
 

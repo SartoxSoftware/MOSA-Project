@@ -55,6 +55,18 @@ public partial class MosaSettings
 		set => Settings.SetValue(Name.AppLocation_Bochs, value);
 	}
 
+	public string BochsBIOS
+	{
+		get => Settings.GetValue(Name.AppLocation_Bochs_BIOS, null);
+		set => Settings.SetValue(Name.AppLocation_Bochs_BIOS, value);
+	}
+
+	public string BochsVGABIOS
+	{
+		get => Settings.GetValue(Name.AppLocation_Bochs_VGABIOS, null);
+		set => Settings.SetValue(Name.AppLocation_Bochs_VGABIOS, value);
+	}
+
 	public string CompileTimeFile
 	{
 		get => Settings.GetValue(Name.CompilerDebug_CompileTimeFile, null);
@@ -143,6 +155,12 @@ public partial class MosaSettings
 	{
 		get => (ushort)Settings.GetValue(Name.Emulator_Serial_Port, 0);
 		set => Settings.SetValue(Name.Emulator_Serial_Port, value);
+	}
+
+	public bool EmulatorQEMUAcceleration
+	{
+		get => Settings.GetValue(Name.Emulator_QEMU_Acceleration, false);
+		set => Settings.SetValue(Name.Emulator_QEMU_Acceleration, value);
 	}
 
 	public string FileSystem
