@@ -227,7 +227,7 @@ jobs:
         optimization: [0,1,2,3,4,5,6,7,8,9]
       fail-fast: false
     name: MacOS - Unit Test -o${{ matrix.optimization }}
-    runs-on: macos-13
+    runs-on: macos-latest
     timeout-minutes: 15
     needs: macos-build
     steps:
@@ -247,14 +247,14 @@ jobs:
       - name: Install Qemu
         run: brew install qemu
       - name: Create Temp Directory
-        run: mkdir bin/BinTemp
+        run: mkdir bin/BinTemp${{ matrix.optimization }}
       - name: Unit Test 
-        run: dotnet bin/Mosa.Utility.UnitTests.dll -check -o${{ matrix.optimization }} -o bin/BinTemp/UnitTests.bin
+        run: dotnet bin/Mosa.Utility.UnitTests.dll -check -o${{ matrix.optimization }} -o bin/BinTemp${{ matrix.optimization }}/UnitTests.bin
       - name: Upload Binary Files
         uses: actions/upload-artifact@master
         with:
           name: BinTemp
-          path: bin/BinTemp
+          path: bin/BinTemp${{ matrix.optimization }}
 
   windows-demo-testing:
     strategy:
