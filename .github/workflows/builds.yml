@@ -249,7 +249,7 @@ jobs:
       - name: Create Temp Directory
         run: mkdir bin/BinTemp
       - name: Unit Test 
-        run: dotnet bin/Mosa.Utility.UnitTests.dll -check -o${{ matrix.optimization }} -o bin/BinTemp
+        run: dotnet bin/Mosa.Utility.UnitTests.dll -check -o${{ matrix.optimization }} -o bin/BinTemp/UnitTests.bin
       - name: Upload Binary Files
         uses: actions/upload-artifact@master
         with:
