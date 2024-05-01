@@ -255,6 +255,7 @@ jobs:
         with:
           name: BinTemp
           path: bin/BinTemp${{ matrix.optimization }}
+        if: always()
 
   windows-demo-testing:
     strategy:
