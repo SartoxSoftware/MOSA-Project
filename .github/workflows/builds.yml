@@ -18,7 +18,7 @@ jobs:
 
   macos-build:
     name: MacOS Build
-    runs-on: macos-latest
+    runs-on: macos-13
     timeout-minutes: 15
     steps:
       - name: Set net8.0
@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
     name: MacOS - Unit Test -o0
-    runs-on: macos-latest
+    runs-on: macos-13
     timeout-minutes: 15
     needs: macos-build
     steps:
@@ -83,7 +83,7 @@ jobs:
     strategy:
       fail-fast: false
     name: MacOS - Demo Test -o0
-    runs-on: macos-latest
+    runs-on: macos-13
     timeout-minutes: 15
     needs: macos-build
     steps:
