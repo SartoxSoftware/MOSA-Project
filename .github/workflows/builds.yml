@@ -16,133 +16,9 @@ env:
 
 jobs:
 
-  windows-build:
-    name: Windows Build
-    runs-on: windows-latest
-    timeout-minutes: 15
-    env:
-      NUGET_ENABLE_LEGACY_CSPROJ_PACK: true
-    steps:
-      - name: Set net8.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-      - name: View Build Version
-        run: echo ${{ env.BUILD_VERSION }}
-      - name: View Github Info
-        run: echo repository=${{ github.repository }} event_name=${{ github.event_name }} ref=${{ github.ref }} head_ref=${{ github.head_ref }} base_ref=${{ github.base_ref }}
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.1
-      - name: Setup Nuget.exe
-        uses: nuget/setup-nuget@v1
-      - name: Restore nuget Packages
-        run: dotnet restore Source/Mosa.sln
-      - name: Build
-        run: dotnet build Source/Mosa.sln /p:Version=${{ env.BUILD_VERSION }}
-      - name: Unit Test
-        run: dotnet test Source/Mosa.sln
-      - name: Cleanup 
-        run: cmd.exe /C "rmdir /s /q bin\reko bin\cs bin\de bin\es bin\fr bin\it bin\ja bin\ko bin\pl bin\pt-BR bin\ru bin\tr bin\zh-Hans bin\zh-Hant"
-      - name: Store Build Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: windows-build-artifact
-          path: bin
-      - name: Create Package - Mosa.Tools.Package
-        run: nuget pack Source\Mosa.Packages\Mosa.Tools.Package.nuspec -Tool -OutputDirectory bin\nupkg -Version ${{ env.BUILD_VERSION }}
-      - name: Create Package - Mosa.Tools.Package.Qemu
-        run: nuget pack Source\Mosa.Packages\Mosa.Tools.Package.Qemu.nuspec -Tool -OutputDirectory bin\nupkg -Version ${{ env.BUILD_VERSION }}
-      - name: Create Package - Mosa.Platform
-        run: nuget pack Source\Mosa.Packages\Mosa.Platform.nuspec -OutputDirectory bin\nupkg -Version ${{ env.BUILD_VERSION }}
-      - name: Create Package - Mosa.Platform.x86
-        run: nuget pack Source\Mosa.Packages\Mosa.Platform.x86.nuspec -OutputDirectory bin\nupkg -Version ${{ env.BUILD_VERSION }}
-      - name: Create Package - Mosa.DeviceSystem
-        run: nuget pack Source\Mosa.Packages\Mosa.DeviceSystem.nuspec -OutputDirectory bin\nupkg -Version ${{ env.BUILD_VERSION }}
-      - name: Build Project - Mosa.Templates
-        run: dotnet build Source\Mosa.Templates\Mosa.Templates.csproj
-      - name: Create Package - Mosa.Templates
-        run: nuget pack Source\Mosa.Templates\Mosa.Templates.csproj -Tool -OutputDirectory bin\nupkg -Version ${{ env.BUILD_VERSION }}
-      - name: Store Nuget Packages Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Nuget Packages
-          path: bin\nupkg
-
-  windows-build-packaging:
-    name: Windows Build Packaging
-    needs: [windows-build, linux-build, macos-build, windows-unit-testing, linux-unit-testing, macos-unit-testing, windows-demo-testing, linux-demo-testing, macos-demo-testing]
-    runs-on: windows-latest
-    timeout-minutes: 15
-    if: github.event_name == 'push' && github.repository == 'mosa/MOSA-Project' && github.ref == 'refs/heads/master'
-    env:
-      NUGET_ENABLE_LEGACY_CSPROJ_PACK: true
-    steps:
-      - name: Set net8.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-      - name: View Build Version
-        run: echo ${{ env.BUILD_VERSION }}
-      - name: View Github Info
-        run: echo repository=${{ github.repository }} event_name=${{ github.event_name }} ref=${{ github.ref }} head_ref=${{ github.head_ref }} base_ref=${{ github.base_ref }}
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Download Nuget Packages Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: Nuget Packages
-          path: bin\nupkg
-      - name: Publish Package - Mosa.Tools.Package
-        run: dotnet nuget push bin\nupkg\Mosa.Tools.Package.${{ env.BUILD_VERSION }}.nupkg -k ${{ secrets.NUGET_KEY }} -s https://api.nuget.org/v3/index.json
-      - name: Publish Package - Mosa.Tools.Package.Qemu
-        run: dotnet nuget push bin\nupkg\Mosa.Tools.Package.Qemu.${{ env.BUILD_VERSION }}.nupkg -k ${{ secrets.NUGET_KEY }} -s https://api.nuget.org/v3/index.json
-      - name: Publish Package - Mosa.Platform
-        run: dotnet nuget push bin\nupkg\Mosa.Platform.${{ env.BUILD_VERSION }}.nupkg -k ${{ secrets.NUGET_KEY }} -s https://api.nuget.org/v3/index.json
-      - name: Publish Package - Mosa.Platform.x86
-        run: dotnet nuget push bin\nupkg\Mosa.Platform.x86.${{ env.BUILD_VERSION }}.nupkg -k ${{ secrets.NUGET_KEY }} -s https://api.nuget.org/v3/index.json
-      - name: Publish Package - Mosa.DeviceSystem
-        run: dotnet nuget push bin\nupkg\Mosa.DeviceSystem.${{ env.BUILD_VERSION }}.nupkg -k ${{ secrets.NUGET_KEY }} -s https://api.nuget.org/v3/index.json
-      - name: Publish Package - Mosa.Templates
-        run: dotnet nuget push bin\nupkg\Mosa.Templates.${{ env.BUILD_VERSION }}.nupkg -k ${{ secrets.NUGET_KEY }} -s https://api.nuget.org/v3/index.json
-
-  linux-build:
-    name: Linux Build
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Set net8.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-      - name: View Build Version
-        run: echo ${{ env.BUILD_VERSION }}
-      - name: View Github Info
-        run: echo repository=${{ github.repository }} event_name=${{ github.event_name }} ref=${{ github.ref }} head_ref=${{ github.head_ref }} base_ref=${{ github.base_ref }}
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Restore nuget Packages
-        run: dotnet restore Source/Mosa.Linux.sln
-      - name: Build
-        run: dotnet build Source/Mosa.Linux.sln
-      - name: Unit Test
-        run: dotnet test Source/Mosa.Linux.sln
-      - name: Store Build Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: linux-build-artifact
-          path: bin
-         
   macos-build:
     name: MacOS Build
-    runs-on: macos-13
+    runs-on: macos-latest
     timeout-minutes: 15
     steps:
       - name: Set net8.0
@@ -169,64 +45,10 @@ jobs:
           name: macos-build-artifact
           path: bin
 
-  windows-unit-testing:
-    strategy:
-      matrix:
-        optimization: [0,1,2,3,4,5,6,7,8,9]
-      fail-fast: false
-    name: Windows - Unit Test -o${{ matrix.optimization }}
-    runs-on: windows-latest
-    timeout-minutes: 15
-    needs: windows-build
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: windows-build-artifact
-          path: bin
-      - name: Unit Test
-        run: bin\Mosa.Utility.UnitTests.exe -check -o${{ matrix.optimization }}
-
-  linux-unit-testing:
-    strategy:
-      matrix:
-        optimization: [0,1,2,3,4,5,6,7,8,9]
-      fail-fast: false
-    name: Linux - Unit Test -o${{ matrix.optimization }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: linux-build
-    steps:
-      - name: Set net8.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: linux-build-artifact
-          path: bin
-      - name: Update Package Respository
-        run: sudo apt-get -y -o Acquire::Check-Valid-Until=false update
-      - name: Install Qemu and Dependencies
-        run: sudo apt-get -y -o Acquire::Retries=5 install qemu-system-x86
-      - name: Unit Test  
-        run: dotnet bin/Mosa.Utility.UnitTests.dll -check -o${{ matrix.optimization }}
-        
   macos-unit-testing:
     strategy:
-      matrix:
-        optimization: [0,1,2,3,4,5,6,7,8,9]
       fail-fast: false
-    name: MacOS - Unit Test -o${{ matrix.optimization }}
+    name: MacOS - Unit Test -o0
     runs-on: macos-latest
     timeout-minutes: 15
     needs: macos-build
@@ -247,87 +69,21 @@ jobs:
       - name: Install Qemu
         run: brew install qemu
       - name: Create Temp Directory
-        run: mkdir bin/BinTemp${{ matrix.optimization }}
+        run: mkdir bin/BinTempARM0
       - name: Unit Test 
-        run: dotnet bin/Mosa.Utility.UnitTests.dll -check -o${{ matrix.optimization }} -o bin/BinTemp${{ matrix.optimization }}/UnitTests.bin
+        run: dotnet bin/Mosa.Utility.UnitTests.dll -check -o0 -o bin/BinTempARM0/UnitTests.bin
       - name: Upload Binary Files
         uses: actions/upload-artifact@master
         with:
           name: BinTemp
-          path: bin/BinTemp${{ matrix.optimization }}
+          path: bin/BinTempARM0
         if: always()
-
-  windows-demo-testing:
-    strategy:
-      matrix:
-        optimization: [0,1,2,3,4,5,6,7,8,9]
-      fail-fast: false
-    name: Windows - Demo Test -o${{ matrix.optimization }}
-    runs-on: windows-latest
-    timeout-minutes: 15
-    needs: windows-build
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: windows-build-artifact
-          path: bin
-      - name: Demo Test - BareMetal Starter
-        run: bin\Mosa.Tool.Launcher.Console.exe bin\Mosa.BareMetal.Starter.x86.dll -o${{ matrix.optimization }} -check -test -output-counters
-      - name: Demo Test - BareMetal TestWorld
-        run: bin\Mosa.Tool.Launcher.Console.exe bin\Mosa.BareMetal.TestWorld.x86.dll -o${{ matrix.optimization }} -check -test -output-counters
-      - name: Demo Test - BareMetal HelloWorld
-        run: bin\Mosa.Tool.Launcher.Console.exe bin\Mosa.BareMetal.HelloWorld.x86.dll -o${{ matrix.optimization }} -check -test -output-counters
-      - name: Demo Test - BareMetal CoolWorld
-        run: bin\Mosa.Tool.Launcher.Console.exe bin\Mosa.BareMetal.CoolWorld.x86.dll -o${{ matrix.optimization }} -check -test -vmware-svga -include bin\Include
-
-  linux-demo-testing:
-    strategy:
-      matrix:
-        optimization: [0,1,2,3,4,5,6,7,8,9]
-      fail-fast: false
-    name: Linux - Demo Test -o${{ matrix.optimization }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: linux-build
-    steps:
-      - name: Set net8.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: linux-build-artifact
-          path: bin
-      - name: Update Package Respository
-        run: sudo apt-get -y -o Acquire::Check-Valid-Until=false update
-      - name: Install Qemu and Dependencies
-        run: sudo apt-get -y -o Acquire::Retries=5 install qemu-system-x86
-      - name: Demo Test - BareMetal Starter
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.Starter.x86.dll -o${{ matrix.optimization }} -check -test -output-counters
-      - name: Demo Test - BareMetal TestWorld
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.TestWorld.x86.dll -o${{ matrix.optimization }} -check -test -output-counters
-      - name: Demo Test - BareMetal HelloWorld
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x86.dll -o${{ matrix.optimization }} -check -test -output-counters
-      - name: Demo Test - BareMetal CoolWorld
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.CoolWorld.x86.dll -o${{ matrix.optimization }} -check -test -vmware-svga -include bin/Include
 
   macos-demo-testing:
     strategy:
-      matrix:
-        optimization: [0,1,2,3,4,5,6,7,8,9]
       fail-fast: false
-    name: MacOS - Demo Test -o${{ matrix.optimization }}
-    runs-on: macos-13
+    name: MacOS - Demo Test -o0
+    runs-on: macos-latest
     timeout-minutes: 15
     needs: macos-build
     steps:
@@ -347,90 +103,10 @@ jobs:
       - name: Install Qemu
         run: brew install qemu
       - name: Demo Test - BareMetal Starter
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.Starter.x86.dll -o${{ matrix.optimization }} -check -test -output-counters
+        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.Starter.x86.dll -o0 -check -test -output-counters
       - name: Demo Test - BareMetal TestWorld
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.TestWorld.x86.dll -o${{ matrix.optimization }} -check -test -output-counters
+        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.TestWorld.x86.dll -o0 -check -test -output-counters
       - name: Demo Test - BareMetal HelloWorld
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x86.dll -o${{ matrix.optimization }} -check -test -output-counters
+        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x86.dll -o0 -check -test -output-counters
       - name: Demo Test - BareMetal CoolWorld
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.CoolWorld.x86.dll -o${{ matrix.optimization }} -check -test -vmware-svga -include bin/Include
-
-  linux-x64-compile-test:
-    name: Linux - X64 Compile Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: linux-build
-    steps:
-      - name: Set net8.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: linux-build-artifact
-          path: bin
-      - name: x64 Compile Test - BareMetal HelloWorld - o0
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x64.dll -x64 -o0 -check -launch-off -output-counters
-      - name: x64 Compile Test - BareMetal HelloWorld - o1
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x64.dll -x64 -o1 -check -launch-off -output-counters
-      - name: x64 Compile Test - BareMetal HelloWorld - o2
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x64.dll -x64 -o2 -check -launch-off -output-counters
-      - name: x64 Compile Test - BareMetal HelloWorld - o3
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x64.dll -x64 -o3 -check -launch-off -output-counters
-      - name: x64 Compile Test - BareMetal HelloWorld - o4
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x64.dll -x64 -o4 -check -launch-off -output-counters
-      - name: x64 Compile Test - BareMetal HelloWorld - o5
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x64.dll -x64 -o5 -check -launch-off -output-counters
-      - name: x64 Compile Test - BareMetal HelloWorld - o6
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x64.dll -x64 -o6 -check -launch-off -output-counters
-      - name: x64 Compile Test - BareMetal HelloWorld - o7
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x64.dll -x64 -o7 -check -launch-off -output-counters
-      - name: x64 Compile Test - BareMetal HelloWorld - o8
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x64.dll -x64 -o8 -check -launch-off -output-counters
-      - name: x64 Compile Test - BareMetal HelloWorld - o9
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.x64.dll -x64 -o9 -check -launch-off -output-counters
-
-  linux-arm32-compile-test:
-    name: Linux - ARM32 Compile Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: linux-build
-    steps:
-      - name: Set net8.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: linux-build-artifact
-          path: bin
-      - name: ARM32 Compile Test - BareMetal HelloWorld - o0
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.ARM32.dll -arm32 -o0 -check -launch-off -output-counters
-      - name: ARM32 Compile Test - BareMetal HelloWorld - o1
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.ARM32.dll -arm32 -o1 -check -launch-off -output-counters
-      - name: ARM32 Compile Test - BareMetal HelloWorld - o2
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.ARM32.dll -arm32 -o2 -check -launch-off -output-counters
-      - name: ARM32 Compile Test - BareMetal HelloWorld - o3
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.ARM32.dll -arm32 -o3 -check -launch-off -output-counters
-      - name: ARM32 Compile Test - BareMetal HelloWorld - o4
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.ARM32.dll -arm32 -o4 -check -launch-off -output-counters
-      - name: ARM32 Compile Test - BareMetal HelloWorld - o5
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.ARM32.dll -arm32 -o5 -check -launch-off -output-counters
-      - name: ARM32 Compile Test - BareMetal HelloWorld - o6
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.ARM32.dll -arm32 -o6 -check -launch-off -output-counters
-      - name: ARM32 Compile Test - BareMetal HelloWorld - o7
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.ARM32.dll -arm32 -o7 -check -launch-off -output-counters
-      - name: ARM32 Compile Test - BareMetal HelloWorld - o8
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.ARM32.dll -arm32 -o8 -check -launch-off -output-counters
-      - name: ARM32 Compile Test - BareMetal HelloWorld - o9
-        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.HelloWorld.ARM32.dll -arm32 -o9 -check -launch-off -output-counters
+        run: dotnet bin/Mosa.Tool.Launcher.Console.dll bin/Mosa.BareMetal.CoolWorld.x86.dll -o0 -check -test -vmware-svga -include bin/Include
