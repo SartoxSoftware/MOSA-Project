@@ -6,59 +6,21 @@ namespace System;
 
 public readonly struct Byte : IComparable, IComparable<byte>, IConvertible, IEquatable<byte>, IFormattable, IParsable<byte>, ISpanFormattable, ISpanParsable<byte>, IAdditionOperators<byte, byte, byte>, IAdditiveIdentity<byte, byte>, IBinaryInteger<byte>, IBinaryNumber<byte>, IBitwiseOperators<byte, byte, byte>, IComparisonOperators<byte, byte, bool>, IEqualityOperators<byte, byte, bool>, IDecrementOperators<byte>, IDivisionOperators<byte, byte, byte>, IIncrementOperators<byte>, IModulusOperators<byte, byte, byte>, IMultiplicativeIdentity<byte, byte>, IMultiplyOperators<byte, byte, byte>, INumber<byte>, INumberBase<byte>, ISubtractionOperators<byte, byte, byte>, IUnaryNegationOperators<byte, byte>, IUnaryPlusOperators<byte, byte>, IUtf8SpanFormattable, IUtf8SpanParsable<byte>, IShiftOperators<byte, int, byte>, IMinMaxValue<byte>, IUnsignedNumber<byte>
 {
-	private readonly byte _dummyPrimitive;
+	public const byte MaxValue = 255, MinValue = 0;
 
-	public const byte MaxValue = 255;
+	private readonly byte backingValue;
 
-	public const byte MinValue = 0;
+	static byte IAdditiveIdentity<byte, byte>.AdditiveIdentity => 0;
 
-	static byte IAdditiveIdentity<byte, byte>.AdditiveIdentity
-	{
-		get
-		{
-			throw null;
-		}
-	}
+	static byte IBinaryNumber<byte>.AllBitsSet => MaxValue;
 
-	static byte IBinaryNumber<byte>.AllBitsSet
-	{
-		get
-		{
-			throw null;
-		}
-	}
+	static byte IMinMaxValue<byte>.MaxValue => MaxValue;
 
-	static byte IMinMaxValue<byte>.MaxValue
-	{
-		get
-		{
-			throw null;
-		}
-	}
+	static byte IMinMaxValue<byte>.MinValue => MinValue;
 
-	static byte IMinMaxValue<byte>.MinValue
-	{
-		get
-		{
-			throw null;
-		}
-	}
+	static byte IMultiplicativeIdentity<byte, byte>.MultiplicativeIdentity => 1;
 
-	static byte IMultiplicativeIdentity<byte, byte>.MultiplicativeIdentity
-	{
-		get
-		{
-			throw null;
-		}
-	}
-
-	static byte INumberBase<byte>.One
-	{
-		get
-		{
-			throw null;
-		}
-	}
+	static byte INumberBase<byte>.One => 1;
 
 	static int INumberBase<byte>.Radix
 	{
@@ -68,27 +30,37 @@ public readonly struct Byte : IComparable, IComparable<byte>, IConvertible, IEqu
 		}
 	}
 
-	static byte INumberBase<byte>.Zero
-	{
-		get
-		{
-			throw null;
-		}
-	}
+	static byte INumberBase<byte>.Zero => 0;
 
 	public static byte Clamp(byte value, byte min, byte max)
 	{
-		throw null;
+		if (value < min)
+			return min;
+
+		if (value > max)
+			return max;
+
+		return value;
 	}
 
 	public int CompareTo(byte value)
 	{
-		throw null;
+		if (backingValue < value)
+			return -1;
+
+		if (backingValue > value)
+			return 1;
+
+		return 0;
 	}
 
 	public int CompareTo(object? value)
 	{
-		throw null;
+		if (value is byte b)
+			return CompareTo(b);
+
+		Internal.Exceptions.Generic.ThrowIncorrectTypeException(nameof(value));
+		return 0;
 	}
 
 	public static byte CreateChecked<TOther>(TOther value) where TOther : INumberBase<TOther>
@@ -107,39 +79,20 @@ public readonly struct Byte : IComparable, IComparable<byte>, IConvertible, IEqu
 	}
 
 	public static (byte Quotient, byte Remainder) DivRem(byte left, byte right)
-	{
-		throw null;
-	}
+		=> ((byte)(left / right), (byte)(left % right));
 
-	public bool Equals(byte obj)
-	{
-		throw null;
-	}
+	public bool Equals(byte obj) => backingValue == obj;
 
 	public override bool Equals([NotNullWhen(true)] object? obj)
-	{
-		throw null;
-	}
+		=> obj is byte value && backingValue == value;
 
-	public override int GetHashCode()
-	{
-		throw null;
-	}
+	public override int GetHashCode() => backingValue;
 
-	public TypeCode GetTypeCode()
-	{
-		throw null;
-	}
+	public TypeCode GetTypeCode() => TypeCode.Byte;
 
-	public static bool IsEvenInteger(byte value)
-	{
-		throw null;
-	}
+	public static bool IsEvenInteger(byte value) => value % 2 == 0;
 
-	public static bool IsOddInteger(byte value)
-	{
-		throw null;
-	}
+	public static bool IsOddInteger(byte value) => !IsEvenInteger(value);
 
 	public static bool IsPow2(byte value)
 	{
@@ -156,15 +109,9 @@ public readonly struct Byte : IComparable, IComparable<byte>, IConvertible, IEqu
 		throw null;
 	}
 
-	public static byte Max(byte x, byte y)
-	{
-		throw null;
-	}
+	public static byte Max(byte x, byte y) => x > y ? x : y;
 
-	public static byte Min(byte x, byte y)
-	{
-		throw null;
-	}
+	public static byte Min(byte x, byte y) => x < y ? x : y;
 
 	public static byte Parse(ReadOnlySpan<byte> utf8Text, NumberStyles style = NumberStyles.Integer, IFormatProvider? provider = null)
 	{
@@ -301,20 +248,11 @@ public readonly struct Byte : IComparable, IComparable<byte>, IConvertible, IEqu
 		throw null;
 	}
 
-	static byte IAdditionOperators<byte, byte, byte>.operator +(byte left, byte right)
-	{
-		throw null;
-	}
+	static byte IAdditionOperators<byte, byte, byte>.operator +(byte left, byte right) => (byte)(left + right);
 
-	static byte IAdditionOperators<byte, byte, byte>.operator checked +(byte left, byte right)
-	{
-		throw null;
-	}
+	static byte IAdditionOperators<byte, byte, byte>.operator checked +(byte left, byte right) => checked((byte)(left + right));
 
-	int IBinaryInteger<byte>.GetByteCount()
-	{
-		throw null;
-	}
+	int IBinaryInteger<byte>.GetByteCount() => sizeof(byte);
 
 	int IBinaryInteger<byte>.GetShortestBitLength()
 	{

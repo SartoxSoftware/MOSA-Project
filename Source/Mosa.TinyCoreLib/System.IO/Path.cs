@@ -4,9 +4,9 @@ namespace System.IO;
 
 public static class Path
 {
-	public static readonly char AltDirectorySeparatorChar;
+	public static readonly char AltDirectorySeparatorChar = Internal.Impl.Path.AltDirectorySeparatorChar;
 
-	public static readonly char DirectorySeparatorChar;
+	public static readonly char DirectorySeparatorChar = Internal.Impl.Path.DirectorySeparatorChar;
 
 	[Obsolete("Path.InvalidPathChars has been deprecated. Use GetInvalidPathChars or GetInvalidFileNameChars instead.")]
 	public static readonly char[] InvalidPathChars;
@@ -23,7 +23,10 @@ public static class Path
 
 	public static string Combine(string path1, string path2)
 	{
-		throw null;
+		var path = path1;
+		if (!path.EndsWith(DirectorySeparatorChar))
+			path += DirectorySeparatorChar;
+		return path + path2;
 	}
 
 	public static string Combine(string path1, string path2, string path3)

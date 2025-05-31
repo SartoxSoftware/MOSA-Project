@@ -11,13 +11,7 @@ public abstract class Stream : MarshalByRefObject, IAsyncDisposable, IDisposable
 
 	public abstract bool CanSeek { get; }
 
-	public virtual bool CanTimeout
-	{
-		get
-		{
-			throw null;
-		}
-	}
+	public virtual bool CanTimeout => false;
 
 	public abstract bool CanWrite { get; }
 
@@ -29,10 +23,13 @@ public abstract class Stream : MarshalByRefObject, IAsyncDisposable, IDisposable
 	{
 		get
 		{
-			throw null;
+			Internal.Exceptions.Generic.InvalidOperation();
+			return 0;
 		}
 		set
 		{
+			_ = value;
+			Internal.Exceptions.Generic.InvalidOperation();
 		}
 	}
 
@@ -40,12 +37,17 @@ public abstract class Stream : MarshalByRefObject, IAsyncDisposable, IDisposable
 	{
 		get
 		{
-			throw null;
+			Internal.Exceptions.Generic.InvalidOperation();
+			return 0;
 		}
 		set
 		{
+			_ = value;
+			Internal.Exceptions.Generic.InvalidOperation();
 		}
 	}
+
+    internal bool closed;
 
 	public virtual IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)
 	{
@@ -59,10 +61,23 @@ public abstract class Stream : MarshalByRefObject, IAsyncDisposable, IDisposable
 
 	public virtual void Close()
 	{
+		Dispose(true);
+		closed = true;
 	}
 
 	public void CopyTo(Stream destination)
 	{
+		if (!CanRead || !destination.CanWrite)
+			Internal.Exceptions.Generic.NotSupported();
+
+		if (closed)
+			Internal.Exceptions.Generic.ObjectDisposed("source");
+
+		var buffer = new byte[Internal.Impl.Stream.CopyBufferSize];
+
+		int read;
+		while ((read = Read(buffer, 0, buffer.Length)) > 0)
+			destination.Write(buffer, 0, read);
 	}
 
 	public virtual void CopyTo(Stream destination, int bufferSize)
@@ -95,12 +110,12 @@ public abstract class Stream : MarshalByRefObject, IAsyncDisposable, IDisposable
 		throw null;
 	}
 
-	public void Dispose()
-	{
-	}
+	public void Dispose() => Close();
 
 	protected virtual void Dispose(bool disposing)
 	{
+		if (disposing)
+			Flush();
 	}
 
 	public virtual ValueTask DisposeAsync()

@@ -11,7 +11,7 @@ namespace System;
 
 public sealed class String : IEnumerable<char>, IEnumerable, ICloneable, IComparable, IComparable<string?>, IConvertible, IEquatable<string?>, IParsable<string>, ISpanParsable<string>
 {
-	public static readonly string Empty;
+	public static readonly string Empty = "";
 
 	[IndexerName("Chars")]
 	public char this[int index]

@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Runtime.Versioning;
 using System.Security;
+using Internal;
 
 namespace System.Runtime.InteropServices;
 
@@ -254,12 +255,16 @@ public static class Marshal
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public static IntPtr GetFunctionPointerForDelegate(Delegate d)
 	{
-		throw null;
+        ArgumentNullException.ThrowIfNull(d, nameof(d));
+
+        return Impl.Marshal.GetFunctionPointerForDelegateInternal(d);
 	}
 
 	public static IntPtr GetFunctionPointerForDelegate<TDelegate>(TDelegate d) where TDelegate : notnull
 	{
-		throw null;
+		ArgumentNullException.ThrowIfNull(d, nameof(d));
+
+		return Impl.Marshal.GetFunctionPointerForDelegateInternal((Delegate)(object)d);
 	}
 
 	[RequiresAssemblyFiles("Windows only assigns HINSTANCE to assemblies loaded from disk. This API will return -1 for modules without a file on disk.")]

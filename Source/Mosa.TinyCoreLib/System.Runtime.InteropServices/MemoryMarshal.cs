@@ -34,12 +34,40 @@ public static class MemoryMarshal
 
 	public static ReadOnlySpan<TTo> Cast<TFrom, TTo>(ReadOnlySpan<TFrom> span) where TFrom : struct where TTo : struct
 	{
-		throw null;
+		if (Internal.Impl.RuntimeHelpers.IsReferenceOrContainsReferences<TFrom>())
+			Internal.Exceptions.Span.ThrowReferenceException();
+
+		if (Internal.Impl.RuntimeHelpers.IsReferenceOrContainsReferences<TTo>())
+			Internal.Exceptions.Span.ThrowReferenceException();
+
+		var toSize = Unsafe.SizeOf<TTo>();
+		
+		if ((long)toSize * span.Length > int.MaxValue)
+			Internal.Exceptions.Generic.Overflow();
+		
+		var fromSize = Unsafe.SizeOf<TFrom>();
+		var newLength = fromSize != toSize ? fromSize / toSize * span.Length : span.Length;
+
+		return new ReadOnlySpan<TTo>(ref Unsafe.As<TFrom, TTo>(ref GetReference(span)), newLength);
 	}
 
 	public static Span<TTo> Cast<TFrom, TTo>(Span<TFrom> span) where TFrom : struct where TTo : struct
 	{
-		throw null;
+		if (Internal.Impl.RuntimeHelpers.IsReferenceOrContainsReferences<TFrom>())
+			Internal.Exceptions.Span.ThrowReferenceException();
+
+		if (Internal.Impl.RuntimeHelpers.IsReferenceOrContainsReferences<TTo>())
+			Internal.Exceptions.Span.ThrowReferenceException();
+
+		var toSize = Unsafe.SizeOf<TTo>();
+		
+		if ((long)toSize * span.Length > int.MaxValue)
+			Internal.Exceptions.Generic.Overflow();
+		
+		var fromSize = Unsafe.SizeOf<TFrom>();
+		var newLength = fromSize != toSize ? fromSize / toSize * span.Length : span.Length;
+
+		return new Span<TTo>(ref Unsafe.As<TFrom, TTo>(ref GetReference(span)), newLength);
 	}
 
 	public static Memory<T> CreateFromPinnedArray<T>(T[]? array, int start, int length)
@@ -79,19 +107,18 @@ public static class MemoryMarshal
 		throw null;
 	}
 
-	public static ref T GetReference<T>(ReadOnlySpan<T> span)
-	{
-		throw null;
-	}
+	public static ref T GetReference<T>(ReadOnlySpan<T> span) => ref span.backingPointer;
 
-	public static ref T GetReference<T>(Span<T> span)
-	{
-		throw null;
-	}
+	public static ref T GetReference<T>(Span<T> span) => ref span.backingPointer;
 
 	public static T Read<T>(ReadOnlySpan<byte> source) where T : struct
 	{
-		throw null;
+		if (Internal.Impl.RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+			Internal.Exceptions.Span.ThrowReferenceException();
+
+		ArgumentOutOfRangeException.ThrowIfLessThan(source.Length, Unsafe.SizeOf<T>(), nameof(source));
+
+		return Unsafe.ReadUnaligned<T>(ref GetReference(source));
 	}
 
 	public static IEnumerable<T> ToEnumerable<T>(ReadOnlyMemory<T> memory)

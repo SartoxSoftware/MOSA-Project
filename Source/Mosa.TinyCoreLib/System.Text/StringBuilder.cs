@@ -95,12 +95,14 @@ public sealed class StringBuilder : ISerializable
 
 	public int Capacity
 	{
-		get
-		{
-			throw null;
-		}
+		get => capacity;
 		set
 		{
+			if (value < Length || value > MaxCapacity)
+				Internal.Exceptions.Generic.ParameterOutOfRange(nameof(value));
+
+			EnsureCapacity(value);
+			capacity = value;
 		}
 	}
 
@@ -109,42 +111,75 @@ public sealed class StringBuilder : ISerializable
 	{
 		get
 		{
-			throw null;
+			if (index < 0 || index >= Length)
+				Internal.Exceptions.Generic.IndexOutOfRange();
+
+			return characters[index];
 		}
 		set
 		{
+			if (index < 0 || index >= Length)
+				Internal.Exceptions.Generic.ParameterOutOfRange(nameof(index));
+
+			characters[index] = value;
 		}
 	}
 
 	public int Length
 	{
-		get
-		{
-			throw null;
-		}
+		get => length;
 		set
 		{
+			if (value < 0 || value > MaxCapacity)
+				Internal.Exceptions.Generic.ParameterOutOfRange(nameof(value));
+
+			if (value > Capacity)
+			{
+				Capacity = value;
+			}
+			else if (value > length)
+			{
+				for (var i = length; i < value; i++)
+					this[i] = '\0';
+			}
+
+			length = value;
 		}
 	}
 
-	public int MaxCapacity
-	{
-		get
-		{
-			throw null;
-		}
-	}
+	public int MaxCapacity { get; }
+
+	private char[] characters;
+	private int capacity, length;
 
 	public StringBuilder()
 	{
+		characters = new char[byte.MaxValue];
+		capacity = characters.Length;
+		MaxCapacity = int.MaxValue;
 	}
 
 	public StringBuilder(int capacity)
 	{
+		if (capacity < 0)
+			Internal.Exceptions.Generic.ParameterOutOfRange(nameof(capacity));
+
+		characters = new char[capacity];
+		this.capacity = capacity;
+		MaxCapacity = int.MaxValue;
 	}
 
 	public StringBuilder(int capacity, int maxCapacity)
 	{
+		if (capacity < 0 || capacity > maxCapacity)
+			Internal.Exceptions.Generic.ParameterOutOfRange(nameof(capacity));
+
+		if (maxCapacity < 1)
+			Internal.Exceptions.Generic.ParameterOutOfRange(nameof(capacity));
+
+		characters = new char[capacity];
+		this.capacity = capacity;
+		MaxCapacity = maxCapacity;
 	}
 
 	public StringBuilder(string? value)
@@ -171,7 +206,10 @@ public sealed class StringBuilder : ISerializable
 
 	public StringBuilder Append(char value)
 	{
-		throw null;
+		EnsureCapacity(Length + 1);
+
+		characters[Length++] = value;
+		return this;
 	}
 
 	[CLSCompliant(false)]
@@ -182,7 +220,13 @@ public sealed class StringBuilder : ISerializable
 
 	public StringBuilder Append(char value, int repeatCount)
 	{
-		throw null;
+		if (repeatCount < 0)
+			Internal.Exceptions.Generic.ParameterOutOfRange(nameof(repeatCount));
+
+		for (var i = 0; i < repeatCount; i++)
+			Append(value);
+
+		return this;
 	}
 
 	public StringBuilder Append(char[]? value)
@@ -253,7 +297,13 @@ public sealed class StringBuilder : ISerializable
 
 	public StringBuilder Append(string? value)
 	{
-		throw null;
+		if (value is null)
+			return this;
+
+		foreach (var character in value)
+			Append(character);
+
+		return this;
 	}
 
 	public StringBuilder Append(string? value, int startIndex, int count)
@@ -401,7 +451,9 @@ public sealed class StringBuilder : ISerializable
 
 	public StringBuilder AppendLine(string? value)
 	{
-		throw null;
+		Append(value);
+		Append(Environment.NewLine);
+		return this;
 	}
 
 	public StringBuilder AppendLine([InterpolatedStringHandlerArgument("")] ref AppendInterpolatedStringHandler handler)
@@ -424,7 +476,19 @@ public sealed class StringBuilder : ISerializable
 
 	public int EnsureCapacity(int capacity)
 	{
-		throw null;
+		if (capacity < 0 || capacity > MaxCapacity)
+			Internal.Exceptions.Generic.ParameterOutOfRange(nameof(capacity));
+
+		if (capacity <= Capacity)
+			return capacity;
+
+		var nextCapacity = capacity + Internal.Impl.StringBuilder.NextCapacityAddSize;
+		var newCharacters = new char[nextCapacity];
+
+		Array.Copy(characters, 0, newCharacters, 0, length);
+		characters = newCharacters;
+
+		return nextCapacity;
 	}
 
 	public bool Equals(ReadOnlySpan<char> span)
@@ -570,10 +634,7 @@ public sealed class StringBuilder : ISerializable
 	{
 	}
 
-	public override string ToString()
-	{
-		throw null;
-	}
+	public override string ToString() => new(characters, 0, Length);
 
 	public string ToString(int startIndex, int length)
 	{

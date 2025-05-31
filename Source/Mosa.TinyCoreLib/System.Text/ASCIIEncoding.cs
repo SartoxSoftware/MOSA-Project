@@ -2,120 +2,125 @@ namespace System.Text;
 
 public class ASCIIEncoding : Encoding
 {
-	public override bool IsSingleByte
-	{
-		get
-		{
-			throw null;
-		}
-	}
+	public override bool IsSingleByte => throw new NotImplementedException();
 
 	[CLSCompliant(false)]
-	public unsafe override int GetByteCount(char* chars, int count)
+	public override unsafe int GetByteCount(char* chars, int count)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetByteCount(char[] chars, int index, int count)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetByteCount(ReadOnlySpan<char> chars)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetByteCount(string chars)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	[CLSCompliant(false)]
-	public unsafe override int GetBytes(char* chars, int charCount, byte* bytes, int byteCount)
+	public override unsafe int GetBytes(char* chars, int charCount, byte* bytes, int byteCount)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetBytes(char[] chars, int charIndex, int charCount, byte[] bytes, int byteIndex)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetBytes(ReadOnlySpan<char> chars, Span<byte> bytes)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetBytes(string chars, int charIndex, int charCount, byte[] bytes, int byteIndex)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	[CLSCompliant(false)]
-	public unsafe override int GetCharCount(byte* bytes, int count)
+	public override unsafe int GetCharCount(byte* bytes, int count)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetCharCount(byte[] bytes, int index, int count)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetCharCount(ReadOnlySpan<byte> bytes)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	[CLSCompliant(false)]
-	public unsafe override int GetChars(byte* bytes, int byteCount, char* chars, int charCount)
+	public override unsafe int GetChars(byte* bytes, int byteCount, char* chars, int charCount)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetChars(byte[] bytes, int byteIndex, int byteCount, char[] chars, int charIndex)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetChars(ReadOnlySpan<byte> bytes, Span<char> chars)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override Decoder GetDecoder()
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override Encoder GetEncoder()
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetMaxByteCount(int charCount)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override int GetMaxCharCount(int byteCount)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override string GetString(byte[] bytes, int byteIndex, int byteCount)
 	{
-		throw null;
+		if (byteCount == 0)
+			return string.Empty;
+
+		var result = string.Empty;
+
+		for (var index = byteIndex; index < byteIndex + byteCount; index++)
+		{
+			var b = bytes[index];
+			result += new string(b <= 0x7F ? (char)b : '?', 1);
+		}
+
+		return result;
 	}
 
 	public override bool TryGetBytes(ReadOnlySpan<char> chars, Span<byte> bytes, out int bytesWritten)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 
 	public override bool TryGetChars(ReadOnlySpan<byte> bytes, Span<char> chars, out int charsWritten)
 	{
-		throw null;
+		throw new NotImplementedException();
 	}
 }
